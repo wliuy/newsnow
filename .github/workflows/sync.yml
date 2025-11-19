@@ -1,0 +1,52 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # 每天运行一次
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync latest commits from upstream repo
+    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.fork }}
+
+    steps:
+      # 步骤 1: 标准检出
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+
+      # 步骤 2: 强力同步 (保留您自己的文件)
+      - name: Sync upstream changes
+        id: sync
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          # ▼▼▼▼▼▼▼▼▼▼ 修改区域 ▼▼▼▼▼▼▼▼▼▼
+          
+          # 原始仓库 (格式：作者/项目名)
+          upstream_sync_repo: ourongxing/newsnow
+          
+          # 原始仓库的分支 (newsnow 是 main)
+          upstream_sync_branch: main
+          
+          # ▲▲▲▲▲▲▲▲▲▲ 修改区域 ▲▲▲▲▲▲▲▲▲▲
+
+          # 您的分支
+          target_sync_branch: main
+          
+          # 关键：必须使用 PAT
+          target_repo_token: ${{ secrets.PAT }}
+          
+          # 关闭测试模式
+          test_mode: false
+
+      # 步骤 3: 失败检测
+      - name: Sync check
+        if: failure()
+        run: |
+          echo "[Error] 同步失败，请检查日志。"
+          exit 1
